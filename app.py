@@ -39,3 +39,55 @@ st.sidebar.header("Filters")
 # Show a preview of the raw data
 st.subheader("Raw Data Preview")
 st.dataframe(df.head(20))
+
+# Import plotly for charts
+import plotly.express as px
+
+# Section: Top 10 countries by a selected indicator
+st.subheader("Top 10 Countries by Indicator")
+
+# Get list of all unique indicators for the dropdown
+indicators = df["Indicator Name"].unique().tolist()
+
+# Dropdown to select an indicator
+selected_indicator = st.selectbox("Select an Indicator", indicators)
+
+# Filter data for the selected indicator and get the most recent year
+df_indicator = df[df["Indicator Name"] == selected_indicator]
+
+# Use the most recent year column with actual data
+recent_year = "2020"
+df_filtered = df_indicator[["Country Name", recent_year]].dropna()
+df_filtered = df_filtered.sort_values(recent_year, ascending=False).head(10)
+
+# Plot the bar chart
+fig = px.bar(df_filtered, x="Country Name", y=recent_year,
+             title=f"Top 10 Countries: {selected_indicator} (2020)",
+             labels={recent_year: "Value", "Country Name": "Country"})
+st.plotly_chart(fig, use_container_width=True)
+
+# Section: Trend over time for a selected country
+st.subheader("Indicator Trend Over Time")
+
+# Dropdown to select a country
+countries = df["Country Name"].unique().tolist()
+selected_country = st.selectbox("Select a Country", countries)
+
+# Filter data for selected country and indicator
+df_country = df[(df["Country Name"] == selected_country) & 
+                (df["Indicator Name"] == selected_indicator)]
+
+# Get year columns only (from 1960 onwards)
+year_columns = [col for col in df.columns if col.isdigit()]
+
+# Reshape data for plotting
+df_trend = df_country[year_columns].T
+df_trend.columns = ["Value"]
+df_trend.index.name = "Year"
+df_trend = df_trend.dropna()
+
+# Plot line chart
+fig2 = px.line(df_trend, x=df_trend.index, y="Value",
+               title=f"{selected_indicator} in {selected_country} over time",
+               labels={"x": "Year", "Value": "Value"})
+st.plotly_chart(fig2, use_container_width=True)
