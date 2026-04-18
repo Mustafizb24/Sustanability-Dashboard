@@ -36,6 +36,33 @@ df = load_data()
 # Sidebar for filters (we will add dropdowns and sliders here later)
 st.sidebar.header("Filters")
 
+# Get list of all unique indicators for the dropdown
+indicators = df["Indicator Name"].unique().tolist()
+
+# Dropdown to select an indicator (moved to sidebar)
+selected_indicator = st.sidebar.selectbox("Select an Indicator", indicators)
+
+# Metric cards showing key summary statistics at the top of the dashboard
+st.subheader("Key Metrics (2020)")
+
+# Filter data for the selected indicator in 2020
+df_metric = df[df["Indicator Name"] == selected_indicator][["Country Name", "2020"]].dropna()
+
+# Create three columns for the metric cards
+col1, col2, col3 = st.columns(3)
+
+col1.metric("Highest Country", 
+            df_metric.loc[df_metric["2020"].idxmax(), "Country Name"],
+            f'{df_metric["2020"].max():.2f}')
+
+col2.metric("Lowest Country",
+            df_metric.loc[df_metric["2020"].idxmin(), "Country Name"],
+            f'{df_metric["2020"].min():.2f}')
+
+col3.metric("Global Average",
+            "All Countries",
+            f'{df_metric["2020"].mean():.2f}')
+
 # Show a preview of the raw data
 st.subheader("Raw Data Preview")
 st.dataframe(df.head(20))
@@ -45,12 +72,6 @@ import plotly.express as px
 
 # Section: Top 10 countries by a selected indicator
 st.subheader("Top 10 Countries by Indicator")
-
-# Get list of all unique indicators for the dropdown
-indicators = df["Indicator Name"].unique().tolist()
-
-# Dropdown to select an indicator
-selected_indicator = st.selectbox("Select an Indicator", indicators)
 
 # Filter data for the selected indicator and get the most recent year
 df_indicator = df[df["Indicator Name"] == selected_indicator]
@@ -66,12 +87,28 @@ fig = px.bar(df_filtered, x="Country Name", y=recent_year,
              labels={recent_year: "Value", "Country Name": "Country"})
 st.plotly_chart(fig, use_container_width=True)
 
+# Section: World map showing indicator by country
+st.subheader("World Map View")
+
+# Merge indicator data with country codes for mapping
+df_map = df[df["Indicator Name"] == selected_indicator][["Country Name", "Country Code", "2020"]].dropna()
+
+# Plot choropleth world map
+fig3 = px.choropleth(df_map,
+                     locations="Country Code",
+                     color="2020",
+                     hover_name="Country Name",
+                     color_continuous_scale="Viridis",
+                     title=f"{selected_indicator} by Country (2020)")
+st.plotly_chart(fig3, use_container_width=True)
+
+
 # Section: Trend over time for a selected country
 st.subheader("Indicator Trend Over Time")
 
-# Dropdown to select a country
+# Dropdown to select a country (moved to sidebar)
 countries = df["Country Name"].unique().tolist()
-selected_country = st.selectbox("Select a Country", countries)
+selected_country = st.sidebar.selectbox("Select a Country", countries)
 
 # Filter data for selected country and indicator
 df_country = df[(df["Country Name"] == selected_country) & 
