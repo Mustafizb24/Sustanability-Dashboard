@@ -36,6 +36,9 @@ df = load_data()
 # Sidebar for filters (we will add dropdowns and sliders here later)
 st.sidebar.header("Filters")
 
+# Year slider for selecting the year to display
+selected_year = st.sidebar.slider("Select Year", min_value=1990, max_value=2020, value=2020, step=1)
+
 # Get list of all unique indicators for the dropdown
 indicators = df["Indicator Name"].unique().tolist()
 
@@ -46,22 +49,22 @@ selected_indicator = st.sidebar.selectbox("Select an Indicator", indicators)
 st.subheader("Key Metrics (2020)")
 
 # Filter data for the selected indicator in 2020
-df_metric = df[df["Indicator Name"] == selected_indicator][["Country Name", "2020"]].dropna()
+df_metric = df[df["Indicator Name"] == selected_indicator][["Country Name", str(selected_year)]].dropna()
+
 
 # Create three columns for the metric cards
 col1, col2, col3 = st.columns(3)
-
 col1.metric("Highest Country", 
-            df_metric.loc[df_metric["2020"].idxmax(), "Country Name"],
-            f'{df_metric["2020"].max():.2f}')
+            df_metric.loc[df_metric[str(selected_year)].idxmax(), "Country Name"],
+            f'{df_metric[str(selected_year)].max():.2f}')
 
 col2.metric("Lowest Country",
-            df_metric.loc[df_metric["2020"].idxmin(), "Country Name"],
-            f'{df_metric["2020"].min():.2f}')
+            df_metric.loc[df_metric[str(selected_year)].idxmin(), "Country Name"],
+            f'{df_metric[str(selected_year)].min():.2f}')
 
 col3.metric("Global Average",
             "All Countries",
-            f'{df_metric["2020"].mean():.2f}')
+            f'{df_metric[str(selected_year)].mean():.2f}')
 
 # Show a preview of the raw data
 st.subheader("Raw Data Preview")
@@ -77,7 +80,7 @@ st.subheader("Top 10 Countries by Indicator")
 df_indicator = df[df["Indicator Name"] == selected_indicator]
 
 # Use the most recent year column with actual data
-recent_year = "2020"
+recent_year = str(selected_year)
 df_filtered = df_indicator[["Country Name", recent_year]].dropna()
 df_filtered = df_filtered.sort_values(recent_year, ascending=False).head(10)
 
@@ -91,12 +94,12 @@ st.plotly_chart(fig, use_container_width=True)
 st.subheader("World Map View")
 
 # Merge indicator data with country codes for mapping
-df_map = df[df["Indicator Name"] == selected_indicator][["Country Name", "Country Code", "2020"]].dropna()
+df_map = df[df["Indicator Name"] == selected_indicator][["Country Name", "Country Code", str(selected_year)]].dropna()
 
 # Plot choropleth world map
 fig3 = px.choropleth(df_map,
                      locations="Country Code",
-                     color="2020",
+                     color=str(selected_year),
                      hover_name="Country Name",
                      color_continuous_scale="Viridis",
                      title=f"{selected_indicator} by Country (2020)")
