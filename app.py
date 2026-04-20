@@ -54,17 +54,22 @@ df_metric = df[df["Indicator Name"] == selected_indicator][["Country Name", str(
 
 # Create three columns for the metric cards
 col1, col2, col3 = st.columns(3)
-col1.metric("Highest Country", 
-            df_metric.loc[df_metric[str(selected_year)].idxmax(), "Country Name"],
-            f'{df_metric[str(selected_year)].max():.2f}')
 
-col2.metric("Lowest Country",
-            df_metric.loc[df_metric[str(selected_year)].idxmin(), "Country Name"],
-            f'{df_metric[str(selected_year)].min():.2f}')
+# Check if data exists for selected year before showing metrics
+if df_metric.empty:
+    st.warning("No data available for this indicator and year combination. Try a different year or indicator.")
+else:
+    col1.metric("Highest Country", 
+                df_metric.loc[df_metric[str(selected_year)].idxmax(), "Country Name"],
+                f'{df_metric[str(selected_year)].max():.2f}')
 
-col3.metric("Global Average",
-            "All Countries",
-            f'{df_metric[str(selected_year)].mean():.2f}')
+    col2.metric("Lowest Country",
+                df_metric.loc[df_metric[str(selected_year)].idxmin(), "Country Name"],
+                f'{df_metric[str(selected_year)].min():.2f}')
+
+    col3.metric("Global Average",
+                "All Countries",
+                f'{df_metric[str(selected_year)].mean():.2f}')
 
 # Show a preview of the raw data
 st.subheader("Raw Data Preview")
@@ -86,8 +91,10 @@ df_filtered = df_filtered.sort_values(recent_year, ascending=False).head(10)
 
 # Plot the bar chart
 fig = px.bar(df_filtered, x="Country Name", y=recent_year,
-             title=f"Top 10 Countries: {selected_indicator} (2020)",
-             labels={recent_year: "Value", "Country Name": "Country"})
+             title=f"Top 10 Countries: {selected_indicator} ({selected_year})",
+             labels={recent_year: "Value", "Country Name": "Country"},
+             color=recent_year,
+             color_continuous_scale="Purples")
 st.plotly_chart(fig, use_container_width=True)
 
 # Section: World map showing indicator by country
@@ -102,7 +109,7 @@ fig3 = px.choropleth(df_map,
                      color=str(selected_year),
                      hover_name="Country Name",
                      color_continuous_scale="Viridis",
-                     title=f"{selected_indicator} by Country (2020)")
+                     title=f"{selected_indicator} by Country ({selected_year})")
 st.plotly_chart(fig3, use_container_width=True)
 
 
