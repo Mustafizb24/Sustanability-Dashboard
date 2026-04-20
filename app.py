@@ -46,7 +46,7 @@ indicators = df["Indicator Name"].unique().tolist()
 selected_indicator = st.sidebar.selectbox("Select an Indicator", indicators)
 
 # Metric cards showing key summary statistics at the top of the dashboard
-st.subheader("Key Metrics (2020)")
+st.subheader(f"Key Metrics ({selected_year})")
 
 # Filter data for the selected indicator in 2020
 df_metric = df[df["Indicator Name"] == selected_indicator][["Country Name", str(selected_year)]].dropna()
