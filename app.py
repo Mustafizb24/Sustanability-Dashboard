@@ -33,6 +33,14 @@ def load_data():
 # Call the function to load data
 df = load_data()
 
+# Load the country metadata file for regional groupings
+@st.cache_data
+def load_country_data():
+    country_df = pd.read_csv("ESGCountry.csv")
+    return country_df
+
+country_df = load_country_data()
+
 # Sidebar for filters (we will add dropdowns and sliders here later)
 st.sidebar.header("Filters")
 
@@ -71,9 +79,7 @@ else:
                 "All Countries",
                 f'{df_metric[str(selected_year)].mean():.2f}')
 
-# Show a preview of the raw data
-st.subheader("Raw Data Preview")
-st.dataframe(df.head(20))
+
 
 # Import plotly for charts
 import plotly.express as px
@@ -138,3 +144,25 @@ fig2 = px.line(df_trend, x=df_trend.index, y="Value",
                title=f"{selected_indicator} in {selected_country} over time",
                labels={"x": "Year", "Value": "Value"})
 st.plotly_chart(fig2, use_container_width=True)
+
+# Section: Average indicator value by region
+st.subheader("Average Value by Region")
+
+# Merge ESG data with country metadata to get regional groupings
+df_region = df[df["Indicator Name"] == selected_indicator][["Country Code", str(selected_year)]].dropna()
+df_region = df_region.merge(country_df[["Country Code", "Region"]], on="Country Code", how="left")
+df_region = df_region.dropna(subset=["Region"])
+
+# Calculate average value per region
+df_region_avg = df_region.groupby("Region")[str(selected_year)].mean().reset_index()
+df_region_avg.columns = ["Region", "Average Value"]
+df_region_avg = df_region_avg.sort_values("Average Value", ascending=False)
+
+# Plot regional bar chart
+fig4 = px.bar(df_region_avg, x="Average Value", y="Region",
+              orientation='h',
+              title=f"Average {selected_indicator} by Region ({selected_year})",
+              labels={"Average Value": "Average Value", "Region": "Region"},
+              color="Average Value",
+              color_continuous_scale="Purples")
+st.plotly_chart(fig4, use_container_width=True)
